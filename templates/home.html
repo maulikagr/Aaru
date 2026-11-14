@@ -405,85 +405,76 @@
     </div>
 
     <!-- TAB 2: DAMAGE CALC CONTENT -->
-    <div id="home-content-damage-calc" class="hidden space-y-6">
-      <div class="max-w-xl mx-auto bg-slate-900/80 border border-slate-800/90 rounded-2xl p-6 shadow-xl space-y-6 sketch-tabs-wrapper backdrop-blur-md">
-        <div class="text-center space-y-1">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold">
-            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-            <span>DoodleUI Sketch Tabs Engine</span>
+    <div id="home-content-damage-calc" class="hidden space-y-8">
+      
+      <!-- TEAM SETUP SECTION -->
+      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-2xl relative overflow-hidden backdrop-blur-md space-y-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[11px] font-bold uppercase tracking-wider font-mono">
+                Team Setup
+              </span>
+              <h3 class="text-xl font-bold text-white tracking-tight">Active Party (4 Slots)</h3>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">
+              Drag and drop any 4 characters from your imported showcase into the team slots below.
+            </p>
           </div>
-          <h3 class="text-lg font-bold text-white tracking-tight pt-2">Damage Formula Theorycrafting</h3>
-          <p class="text-xs text-slate-400">Procedural hand-drawn underline with real-time sliding transitions.</p>
-        </div>
 
-        <div class="flex items-center justify-center border-b border-slate-800 pb-2">
-          <div id="sketch-demo-tabs" class="sketch-tab-list flex items-center gap-4" data-sketch-color="#f59e0b" data-roughness="1.5">
-            <button class="sketch-tab active" data-tab="ink">
-              <i data-lucide="pen-tool" class="w-4 h-4"></i>
-              <span>Ink</span>
-            </button>
-            <button class="sketch-tab" data-tab="wash">
-              <i data-lucide="palette" class="w-4 h-4"></i>
-              <span>Wash</span>
-            </button>
-            <button class="sketch-tab" data-tab="paper">
-              <i data-lucide="file-text" class="w-4 h-4"></i>
-              <span>Paper</span>
-            </button>
-            <button class="sketch-tab" data-tab="damage">
-              <i data-lucide="swords" class="w-4 h-4"></i>
-              <span>Theorycraft</span>
+          <div class="flex items-center gap-3">
+            <div id="home-team-count-badge" class="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-slate-300">
+              Party: <span id="home-team-count" class="font-bold text-amber-400">0</span> / 4
+            </div>
+            <button id="home-btn-clear-team" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-medium transition flex items-center gap-1.5 shadow-sm active:scale-95">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              <span>Clear Team</span>
             </button>
           </div>
         </div>
 
-        <div class="pt-2">
-          <div class="sketch-panel active space-y-3" data-panel="ink">
-            <img src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=600&auto=format&fit=crop&q=80" alt="Ink Art" class="w-full h-36 object-cover rounded-xl border border-slate-800" />
-            <div class="p-3 bg-slate-950/70 rounded-xl border border-slate-800/80">
-              <h4 class="text-sm font-semibold text-amber-400">Real HTML Under a Sketch Underline</h4>
-              <p class="text-xs text-slate-400 mt-1">Each tab change dynamically recalculates element dimensions and renders an organic wavy SVG path with procedural roughness.</p>
-            </div>
+        <!-- Resonance Banner -->
+        <div id="home-team-resonance-container" class="hidden flex flex-wrap items-center gap-2 text-xs"></div>
+
+        <!-- 4 Team Member Slots Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="home-team-slots-container"></div>
+      </section>
+
+      <!-- IMPORTED CHARACTERS POOL -->
+      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden backdrop-blur-md space-y-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+          <div>
+            <h4 class="text-base font-bold text-white flex items-center gap-2">
+              <i data-lucide="users" class="w-4 h-4 text-amber-400"></i>
+              <span>Imported Characters</span>
+              <span id="home-pool-count" class="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">0</span>
+            </h4>
+            <p class="text-xs text-slate-400 mt-0.5">Drag any character into a slot above, or click to assign to the first open slot.</p>
           </div>
 
-          <div class="sketch-panel hidden space-y-3" data-panel="wash">
-            <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80" alt="Wash Texture" class="w-full h-36 object-cover rounded-xl border border-slate-800" />
-            <div class="p-3 bg-slate-950/70 rounded-xl border border-slate-800/80">
-              <h4 class="text-sm font-semibold text-cyan-400">Switching Tabs Redraws the Rule</h4>
-              <p class="text-xs text-slate-400 mt-1">A smooth sliding CSS transition moves the underline while a seeded pseudo-random generator redraws the organic hand-drawn path.</p>
-            </div>
-          </div>
-
-          <div class="sketch-panel hidden space-y-3" data-panel="paper">
-            <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&auto=format&fit=crop&q=80" alt="Paper Texture" class="w-full h-36 object-cover rounded-xl border border-slate-800" />
-            <div class="p-3 bg-slate-950/70 rounded-xl border border-slate-800/80">
-              <h4 class="text-sm font-semibold text-emerald-400">Responsive & Accessible</h4>
-              <p class="text-xs text-slate-400 mt-1">A ResizeObserver continuously monitors container resizing to keep the sketch underline aligned across all viewports.</p>
-            </div>
-          </div>
-
-          <div class="sketch-panel hidden space-y-3" data-panel="damage">
-            <div class="grid grid-cols-3 gap-2.5 text-center text-xs">
-              <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl">
-                <span class="text-slate-400 block text-[10px] uppercase">Base ATK</span>
-                <span class="text-base font-bold text-amber-400 font-mono">1,940</span>
-              </div>
-              <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl">
-                <span class="text-slate-400 block text-[10px] uppercase">CRIT Rate</span>
-                <span class="text-base font-bold text-cyan-400 font-mono">74.2%</span>
-              </div>
-              <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl">
-                <span class="text-slate-400 block text-[10px] uppercase">CRIT DMG</span>
-                <span class="text-base font-bold text-rose-400 font-mono">226.4%</span>
-              </div>
-            </div>
-            <div class="p-3 bg-slate-950/70 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
-              <span class="text-slate-300">Vaporize / Melt Amp Multiplier</span>
-              <span class="text-emerald-400 font-bold font-mono">2.0x (Reaction Capable)</span>
-            </div>
+          <!-- Element Filter Pills -->
+          <div class="flex items-center gap-1 overflow-x-auto pb-1 max-w-full" id="home-element-filter-bar">
+            <button class="elem-filter-btn active px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40" data-element="all">All</button>
+            <button class="elem-filter-btn px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white" data-element="Pyro">Pyro</button>
+            <button class="elem-filter-btn px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white" data-element="Hydro">Hydro</button>
+            <button class="elem-filter-btn px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white" data-element="Cryo">Cryo</button>
+            <button class="elem-filter-btn px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white" data-element="Electro">Electro</button>
+            <button class="elem-filter-btn px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white" data-element="Anemo">Anemo</button>
+            <button class="elem-filter-btn px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white" data-element="Geo">Geo</button>
+            <button class="elem-filter-btn px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white" data-element="Dendro">Dendro</button>
           </div>
         </div>
-      </div>
+
+        <!-- Draggable Character Cards Grid -->
+        <div id="home-character-pool-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3"></div>
+
+        <!-- No Characters Notice (If not imported yet) -->
+        <div id="home-no-chars-notice" class="hidden text-center py-8 text-xs text-slate-500 space-y-2">
+          <i data-lucide="info" class="w-8 h-8 text-slate-600 mx-auto"></i>
+          <p>No characters imported yet. Enter a UID above to inspect and import characters.</p>
+        </div>
+      </section>
+
     </div>
 
   </div>
