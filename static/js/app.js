@@ -108,7 +108,21 @@ const el = {
   poolCount: document.getElementById("pool-count"),
   btnClearTeam: document.getElementById("btn-clear-team"),
   teamResonanceContainer: document.getElementById("team-resonance-container"),
-  elementFilterBar: document.getElementById("element-filter-bar")
+  elementFilterBar: document.getElementById("element-filter-bar"),
+  // DPS Calculation
+  btnCalcDps: document.getElementById("btn-calc-dps"),
+  dpsResultsSection: document.getElementById("dps-results-section"),
+  dpsMetricTeamDps: document.getElementById("dps-metric-team-dps"),
+  dpsMetricTotalDmg: document.getElementById("dps-metric-total-dmg"),
+  dpsMetricDuration: document.getElementById("dps-metric-duration"),
+  dpsTargetRes: document.getElementById("dps-target-res"),
+  dpsShareBar: document.getElementById("dps-share-bar"),
+  dpsShareLegend: document.getElementById("dps-share-legend"),
+  rotationStepsCount: document.getElementById("rotation-steps-count"),
+  rotationTimelineContainer: document.getElementById("rotation-timeline-container"),
+  characterBreakdownGrid: document.getElementById("character-breakdown-grid"),
+  dpsActiveBuffsList: document.getElementById("dps-active-buffs-list"),
+  dpsOptimizationBanner: document.getElementById("dps-optimization-banner")
 };
 
 // Initialization
@@ -587,6 +601,14 @@ function initTeamBuilder() {
       saveActiveTeam();
       renderTeamSlots();
       renderCharacterPool();
+      if (el.dpsResultsSection) el.dpsResultsSection.classList.add("hidden");
+    };
+  }
+
+  // Setup Calculate Team DPS Button
+  if (el.btnCalcDps) {
+    el.btnCalcDps.onclick = () => {
+      calculateTeamDps();
     };
   }
 
@@ -937,5 +959,325 @@ function calculateResonances() {
     `;
     el.teamResonanceContainer.appendChild(badge);
   });
+}
+
+// ==========================================
+// DPS & OPTIMAL ROTATION ENGINE
+// ==========================================
+
+async function calculateTeamDps() {
+  const activeMembers = state.team.filter(Boolean);
+  if (activeMembers.length === 0) {
+    showStatusBanner("warning", "Empty Party", "Please drag at least one character into the team slots before calculating DPS.");
+    return;
+  }
+
+  const currentUid = state.player?.uid || window.__PROFILE_UID__ || (window.location.pathname.startsWith("/profile/") ? window.location.pathname.split("/")[2] : null);
+
+  if (el.btnCalcDps) {
+    el.btnCalcDps.disabled = true;
+    el.btnCalcDps.innerHTML = `
+      <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-slate-950 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <span>Fetching live Enka data & running 60s gcsim simulation...</span>
+    `;
+  }
+
+  try {
+    const res = await fetch("/api/calculate-dps", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        team: activeMembers,
+        uid: currentUid
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || "Failed to calculate team DPS.");
+    }
+
+    renderDpsResults(data);
+
+    if (el.dpsResultsSection) {
+      el.dpsResultsSection.classList.remove("hidden");
+      el.dpsResultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  } catch (err) {
+    console.error("DPS Calculation Error:", err);
+    showStatusBanner("error", "Calculation Failed", err.message || "An error occurred during DPS calculation.");
+  } finally {
+    if (el.btnCalcDps) {
+      el.btnCalcDps.disabled = false;
+      el.btnCalcDps.innerHTML = `
+        <i data-lucide="cpu" class="w-4 h-4"></i>
+        <span>Run 60s Simulation (gcsim)</span>
+      `;
+      if (window.lucide) lucide.createIcons();
+    }
+  }
+}
+
+function renderDpsResults(data) {
+  if (!el.dpsResultsSection) return;
+  el.dpsResultsSection.classList.remove("hidden");
+
+  // 0. Target & Optimization Banner
+  if (el.dpsOptimizationBanner) {
+    if (data.vvComparison) {
+      const vv = data.vvComparison;
+      el.dpsOptimizationBanner.classList.remove("hidden");
+      el.dpsOptimizationBanner.innerHTML = `
+        <div class="p-4 rounded-2xl bg-gradient-to-r from-teal-950/60 via-slate-900/90 to-cyan-950/50 border border-teal-500/40 shadow-xl backdrop-blur-md">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider rounded-lg bg-teal-500/20 text-teal-300 border border-teal-500/30 flex items-center gap-1.5 font-mono">
+                <i data-lucide="shield" class="w-3.5 h-3.5"></i> Target: Level 100 Ruin Guard (Abyss 12)
+              </span>
+              <span class="text-xs font-semibold text-white">4pc Viridescent Venerer Benchmark</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-base font-extrabold text-teal-300 font-mono">${Number(vv.optimizedTeamDps).toLocaleString()} DPS</span>
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/20 text-emerald-400 font-mono">+${vv.gainPercent}</span>
+            </div>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            <span class="text-teal-300 font-semibold font-mono">In-Game Test Match:</span> ${vv.note} 
+            Currently in your Enka showcase, <span class="text-white font-semibold">${vv.anemoCharacter}</span> has <span class="text-amber-400 font-mono">${vv.currentSet}</span> equipped (${Number(vv.currentTeamDps).toLocaleString()} DPS).
+          </p>
+        </div>
+      `;
+      if (window.lucide) lucide.createIcons();
+    } else {
+      el.dpsOptimizationBanner.classList.remove("hidden");
+      el.dpsOptimizationBanner.innerHTML = `
+        <div class="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-md flex items-center justify-between font-mono text-xs text-slate-300">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20">
+              Target: Level 100 Ruin Guard
+            </span>
+            <span>Official 60-Second gcsim Combat Simulation</span>
+          </div>
+          <span class="text-slate-400 text-[11px]">10% Base Elemental RES • 250 Iterations</span>
+        </div>
+      `;
+    }
+  }
+
+  // 1. Hero Metrics
+  if (el.dpsMetricTeamDps) {
+    el.dpsMetricTeamDps.textContent = Number(data.teamDps || 0).toLocaleString() + " DPS";
+  }
+  if (el.dpsMetricTotalDmg) {
+    el.dpsMetricTotalDmg.textContent = Number(data.total60sDamage || data.totalRotationDamage || 0).toLocaleString();
+  }
+  if (el.dpsMetricDuration) {
+    const dur = data.simulationDuration || data.rotationDuration || 60.0;
+    el.dpsMetricDuration.textContent = `${dur.toFixed(1)}s (1 Min)`;
+  }
+  const engineEl = document.getElementById("dps-metric-engine");
+  if (engineEl && data.engine) {
+    engineEl.textContent = data.engine.split("(")[0].trim();
+  }
+  if (el.dpsTargetRes && data.enemyConfig) {
+    const defRed = data.enemyConfig.defReduction && data.enemyConfig.defReduction !== "0%" ? ` • -${data.enemyConfig.defReduction} DEF Shred` : "";
+    const resShred = data.enemyConfig.resShred && data.enemyConfig.resShred !== "0%" ? ` • -${data.enemyConfig.resShred} RES Shred` : "";
+    const iters = data.iterations || data.enemyConfig.iterations || 250;
+    el.dpsTargetRes.textContent = `${data.enemyConfig.baseRes} Base RES • ${iters} Iterations${resShred}${defRed}`;
+  }
+
+  // 2. Damage Contribution Segmented Bar & Legend
+  if (el.dpsShareBar && el.dpsShareLegend) {
+    el.dpsShareBar.innerHTML = "";
+    el.dpsShareLegend.innerHTML = "";
+
+    (data.characters || []).forEach(char => {
+      const elemColor = ELEMENT_COLORS[char.element] || "#fbbf24";
+      const sharePct = char.shareNumeric || 0;
+
+      // Segment in progress bar
+      const seg = document.createElement("div");
+      seg.className = "h-full transition-all relative group";
+      seg.style.width = `${sharePct}%`;
+      seg.style.backgroundColor = elemColor;
+      seg.setAttribute("title", `${char.name}: ${Number(char.totalDamage).toLocaleString()} (${char.damageShare})`);
+      el.dpsShareBar.appendChild(seg);
+
+      // Legend Item
+      const legItem = document.createElement("div");
+      legItem.className = "flex items-center gap-1.5 text-slate-300 font-mono text-[11px]";
+      legItem.innerHTML = `
+        <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: ${elemColor}"></span>
+        <span class="font-bold text-white">${char.name}:</span>
+        <span class="text-amber-400 font-semibold">${char.damageShare}</span>
+        <span class="text-slate-500">(${Number(char.totalDamage).toLocaleString()})</span>
+      `;
+      el.dpsShareLegend.appendChild(legItem);
+    });
+  }
+
+  // 3. Optimal Rotation Timeline
+  if (el.rotationTimelineContainer) {
+    el.rotationTimelineContainer.innerHTML = "";
+    const steps = data.optimalRotation || [];
+    if (el.rotationStepsCount) el.rotationStepsCount.textContent = `${steps.length} Steps`;
+
+    steps.forEach((step, idx) => {
+      const elemColor = ELEMENT_COLORS[step.element] || "#fbbf24";
+      const elemClass = ELEMENT_CLASSES[step.element] || "elem-pyro";
+
+      const stepCard = document.createElement("div");
+      stepCard.className = "flex items-start gap-3 p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/80 hover:border-slate-700 transition";
+
+      // Buffs badges HTML
+      let buffsHtml = "";
+      if (step.activeBuffs && step.activeBuffs.length > 0) {
+        buffsHtml = step.activeBuffs.map(b => 
+          `<span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700/80 text-[10px] text-slate-300 font-sans">${b}</span>`
+        ).join("");
+      }
+
+      stepCard.innerHTML = `
+        <div class="flex flex-col items-center shrink-0 w-12 pt-0.5">
+          <span class="px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-amber-400 font-mono text-[11px] font-bold">
+            #${step.step || idx + 1}
+          </span>
+          <span class="text-[10px] font-mono text-slate-500 mt-1">${step.startTime}</span>
+        </div>
+
+        <div class="relative w-10 h-10 rounded-xl overflow-hidden bg-slate-900 border shrink-0 mt-0.5" style="border-color: ${elemColor}">
+          <img src="${step.iconUrl}" alt="${step.character}" class="w-full h-full object-cover" onerror="this.src='https://enka.network/ui/UI_AvatarIcon_Side_PlayerBoy.png'" />
+        </div>
+
+        <div class="flex-1 min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="font-bold text-white text-xs">${step.character}</span>
+            <span class="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase tracking-wider ${elemClass}">${step.element}</span>
+            <span class="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[11px] font-bold font-mono">
+              ${step.action}
+            </span>
+            <span class="text-[10px] text-slate-500 font-mono ml-auto">Duration: ${step.startTime} → ${step.endTime}</span>
+          </div>
+          <p class="text-xs text-slate-300 mt-1 leading-relaxed">${step.description}</p>
+          ${buffsHtml ? `<div class="flex flex-wrap gap-1.5 mt-2">${buffsHtml}</div>` : ''}
+        </div>
+      `;
+      el.rotationTimelineContainer.appendChild(stepCard);
+    });
+  }
+
+  // 4. Per-Character Breakdown Cards Grid
+  if (el.characterBreakdownGrid) {
+    el.characterBreakdownGrid.innerHTML = "";
+
+    (data.characters || []).forEach(char => {
+      const elemColor = ELEMENT_COLORS[char.element] || "#fbbf24";
+      const elemClass = ELEMENT_CLASSES[char.element] || "elem-pyro";
+
+      const card = document.createElement("div");
+      card.className = "bg-slate-950/80 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between space-y-3 relative overflow-hidden";
+      card.style.borderTop = `3px solid ${elemColor}`;
+
+      let skillsHtml = "";
+      (char.skillsBreakdown || []).forEach(sk => {
+        const dpsLabel = sk.dps ? `${Number(sk.dps).toLocaleString()} DPS` : (sk.hits ? `${sk.hits} hits • Scaled on ${sk.statScaled}` : '');
+        skillsHtml += `
+          <div class="flex items-center justify-between text-xs py-1.5 border-b border-slate-800/60 last:border-0">
+            <div>
+              <span class="text-slate-200 font-medium block truncate max-w-[150px]">${sk.name}</span>
+              <span class="text-[10px] text-slate-500 font-mono">${dpsLabel}</span>
+            </div>
+            <div class="text-right font-mono">
+              <span class="font-bold text-amber-300 text-xs block">${Number(sk.damage).toLocaleString()}</span>
+              <span class="text-[9px] text-slate-500">60s DMG</span>
+            </div>
+          </div>
+        `;
+      });
+
+      card.innerHTML = `
+        <div>
+          <!-- Header -->
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase tracking-wider ${elemClass}">${char.element}</span>
+                <span class="text-[10px] text-slate-400 font-mono">${char.role}</span>
+              </div>
+              <h5 class="font-bold text-white text-sm mt-0.5 truncate">${char.name}</h5>
+            </div>
+            <div class="text-right">
+              <span class="text-amber-400 font-mono font-extrabold text-sm">${char.damageShare}</span>
+              <div class="text-[9px] text-slate-500 font-mono">Team Share</div>
+            </div>
+          </div>
+
+          <!-- Total Damage Badge -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 my-3 flex items-center justify-between font-mono">
+            <div>
+              <div class="text-[9px] uppercase tracking-wider text-slate-400">Total 60s DMG</div>
+              <div class="text-base font-extrabold text-white">${Number(char.totalDamage).toLocaleString()}</div>
+            </div>
+            <div class="text-right">
+              <div class="text-[9px] uppercase tracking-wider text-slate-400">DPS (DMG / 60s)</div>
+              <div class="text-xs font-bold text-emerald-400">${Number(char.dpsContribution).toLocaleString()} /s</div>
+            </div>
+          </div>
+
+          <!-- Active Reaction Tag -->
+          <div class="flex items-center justify-between text-[11px] mb-2 px-1 font-mono">
+            <span class="text-slate-400">Reaction / Buff:</span>
+            <span class="text-cyan-400 font-semibold truncate max-w-[140px]">${char.reactionTag}</span>
+          </div>
+
+          <!-- Effective Combat Stats -->
+          <div class="grid grid-cols-2 gap-2 text-[10px] font-mono bg-slate-900/50 rounded-xl p-2 border border-slate-800/70 mb-3">
+            <div>
+              <span class="text-slate-400">Eff. ${char.primaryStatType}:</span>
+              <span class="text-white font-bold ml-1">${Number(char.effectiveStat).toLocaleString()}</span>
+            </div>
+            <div class="text-right">
+              <span class="text-slate-400">CRIT:</span>
+              <span class="text-amber-300 font-bold ml-1">${char.critRate} / ${char.critDmg}</span>
+            </div>
+          </div>
+
+          <!-- Skill Breakdown list -->
+          <div class="space-y-1">
+            <div class="text-[10px] uppercase font-bold text-slate-400 font-mono tracking-wider">60s Ability Damage Breakdown</div>
+            <div class="bg-slate-900/60 rounded-xl p-2 border border-slate-800/60 space-y-0.5">
+              ${skillsHtml || '<div class="text-[11px] text-slate-500 italic py-1">Direct combat contributions</div>'}
+            </div>
+          </div>
+        </div>
+      `;
+
+      el.characterBreakdownGrid.appendChild(card);
+    });
+  }
+
+  // 5. Active Synergy Buffs & Multipliers
+  if (el.dpsActiveBuffsList) {
+    el.dpsActiveBuffsList.innerHTML = "";
+    const buffs = data.teamBuffs || [];
+    if (buffs.length === 0) {
+      el.dpsActiveBuffsList.innerHTML = `<span class="text-xs text-slate-500 italic">No external team buffs active</span>`;
+    } else {
+      buffs.forEach(b => {
+        const badge = document.createElement("div");
+        badge.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium";
+        badge.innerHTML = `
+          <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-400 shrink-0"></i>
+          <span>${b}</span>
+        `;
+        el.dpsActiveBuffsList.appendChild(badge);
+      });
+    }
+  }
+
+  if (window.lucide) lucide.createIcons();
 }
 

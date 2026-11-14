@@ -1,0 +1,39 @@
+
+options iteration=50 duration=60;
+target lvl=90 resist=0.1;
+
+yaemiko char lvl=70/70 cons=0 talent=1,6,4;
+yaemiko add weapon="lostprayertothesacredwinds" refine=1 lvl=50/50;
+yaemiko add set="disenchantmentindeepshadow" count=4;
+yaemiko add stats hp=14544 atk=1488 def=467 cr=0.640 cd=1.783 er=1.0 em=117 electro%=0.466;
+
+escoffier char lvl=70/70 cons=0 talent=1,6,1;
+escoffier add weapon="fracturedhalo" refine=1 lvl=90/90;
+escoffier add set="tenacityofthemillelith" count=4;
+escoffier add stats hp=19358 atk=1756 def=867 cr=0.484 cd=2.289 er=1.194 em=0 cryo%=0.466;
+
+odette char lvl=70/70 cons=0 talent=1,5,1;
+odette add weapon="exaiphanesblade" refine=3 lvl=90/90;
+odette add set="heartofthefurnace" count=4;
+odette add stats hp=16336 atk=2343 def=780 cr=0.692 cd=2.029 er=1.0 em=82;
+
+sandrone char lvl=90/90 cons=0 talent=8,1,6;
+sandrone add weapon="athousandblazingsuns" refine=1 lvl=90/90;
+sandrone add set="disenchantmentindeepshadow" count=4;
+sandrone add stats hp=20101 atk=2816 def=820 cr=0.772 cd=1.884 er=1.0 em=56;
+
+active yaemiko;
+while 1 {
+  yaemiko skill:3;
+  escoffier skill;
+  odette skill:2;
+  sandrone skill;
+  sandrone charge;
+  sandrone skill;
+  sandrone charge;
+  if .sandrone.burst.ready {
+    sandrone burst;
+  }
+  sandrone skill;
+  sandrone charge;
+}

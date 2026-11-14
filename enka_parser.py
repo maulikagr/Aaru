@@ -37,13 +37,14 @@ ARTIFACT_SETS = {
     "14010": "Noblesse Oblige",
     "14011": "Bloodstained Chivalry",
     "15001": "Archaic Petra",
-    "15002": "Retracing Bolide",
+    "15002": "Viridescent Venerer",
     "15003": "Heart of Depth",
     "15005": "Tenacity of the Millelith",
     "15006": "Pale Flame",
     "15007": "Shimenawa's Reminiscence",
     "15008": "Bloodstained Chivalry",
-    "15017": "Husk of Opulent Dreams",
+    "15015": "Retracing Bolide",
+    "15017": "Tenacity of the Millelith",
     "15018": "Ocean-Hued Clam",
     "15019": "Vermillion Hereafter",
     "15020": "Echoes of an Offering",
@@ -82,12 +83,13 @@ ARTIFACT_HASHES = {
     "279470371": "Obsidian Codex",
     "1212345779": "Archaic Petra",
     "1774578891": "Nighttime Whispers in the Echoing Woods",
-    "1337665995": "Husk of Opulent Dreams",
+    "1337665995": "Tenacity of the Millelith",
     "2949387691": "Scroll of the Hero of Cinder City",
     "1086878883": "Disenchantment in Deep Shadow",
     "3410220315": "Golden Troupe",
     "1035953267": "Heart of the Furnace",
-    "625305019": "Silken Moon's Serenade"
+    "625305019": "Silken Moon's Serenade",
+    "1562600667": "Viridescent Venerer"
 }
 
 # Stat Prop Names Mapping
@@ -176,6 +178,12 @@ CUSTOM_CHARACTERS = {
         "iconUrl": "https://enka.network/ui/UI_AvatarIcon_Side_Mavuika.png",
         "splashUrl": "https://enka.network/ui/UI_Gacha_AvatarImg_Mavuika.png"
     },
+    "10000112": {
+        "name": "Escoffier",
+        "element": "Cryo",
+        "iconUrl": "https://enka.network/ui/UI_AvatarIcon_Side_Escoffier.png",
+        "splashUrl": "https://enka.network/ui/UI_Gacha_AvatarImg_Escoffier.png"
+    },
     "10000133": {
         "name": "Sandrone",
         "element": "Cryo",
@@ -220,6 +228,7 @@ CUSTOM_WEAPONS = {
     "UI_EquipIcon_Sword_Machination": "Fleuve Cendre Ferryman",
     "UI_EquipIcon_Sword_WeaponQuestSnezhnaya": "Exaiphanes Blade",
     "UI_EquipIcon_Pole_Aoandon": "Tamayuratei no Ohanashi",
+    "UI_EquipIcon_Pole_Perdix": "Fractured Halo",
     "UI_EquipIcon_Catalyst_Fourwinds": "Lost Prayer to the Sacred Winds"
 }
 
@@ -424,6 +433,9 @@ def parse_avatar(avatar: Dict[str, Any]) -> Dict[str, Any]:
     skill_level_map = avatar.get("skillLevelMap", {})
     proud_skill_extra = avatar.get("proudSkillExtraLevelMap", {})
     skill_order = c_meta.get("SkillOrder", [])
+    if not skill_order and skill_level_map:
+        # Fallback for custom/unmapped characters: sort by skill ID (NA, Skill, Burst)
+        skill_order = sorted(skill_level_map.keys(), key=lambda x: int(x))
     
     talents = []
     talent_labels = ["Normal Attack", "Elemental Skill", "Elemental Burst"]
@@ -520,119 +532,140 @@ def fetch_and_parse_enka(uid: str) -> Dict[str, Any]:
             if response.status == 200:
                 raw_bytes = response.read()
                 data = json.loads(raw_bytes.decode("utf-8"))
-
-                p_info = data.get("playerInfo", {})
-                nickname = p_info.get("nickname", "Traveler")
-                level = p_info.get("level", 60)
-                world_level = p_info.get("worldLevel", 8)
-                signature = p_info.get("signature", "")
-                achievements = p_info.get("finishAchievementNum", 0)
-                
-                # Spiral Abyss floor & chamber
-                tower_floor = p_info.get("towerFloorIndex", 0)
-                tower_chamber = p_info.get("towerLevelIndex", 0)
-                tower_star = p_info.get("towerStarIndex", 0)
-                abyss_str = f"Floor {tower_floor} - Chamber {tower_chamber}" if tower_floor else "Not Cleared"
-
-                # Stygian Nymph
-                stygian_seconds = p_info.get("stygianSeconds", 0)
-                stygian_index = p_info.get("stygianIndex", 0)
-
-                # Theater (Imaginarium Theater)
-                theater_act = p_info.get("theaterActIndex", 0)
-                theater_mode = p_info.get("theaterModeIndex", 0)
-                theater_star = p_info.get("theaterStarIndex", 0)
-
-                # Profile picture
-                profile_pic = p_info.get("profilePicture", {})
-                avatar_pic_id = profile_pic.get("avatarId")
-                pic_id = profile_pic.get("id")
-
-                if pic_id == 11600 or avatar_pic_id == 10000133:
-                    profile_icon_url = "https://enka.network/ui/UI_AvatarIcon_MarionetteNew.png"
-                elif avatar_pic_id and str(avatar_pic_id) in CUSTOM_CHARACTERS:
-                    profile_icon_url = CUSTOM_CHARACTERS[str(avatar_pic_id)]["iconUrl"]
-                elif avatar_pic_id and str(avatar_pic_id) in CHARACTERS_DATA:
-                    p_side_icon = CHARACTERS_DATA[str(avatar_pic_id)].get("SideIconName", "UI_AvatarIcon_Side_PlayerBoy")
-                    profile_icon_url = f"https://enka.network/ui/{p_side_icon}.png"
-                else:
-                    profile_icon_url = "https://enka.network/ui/UI_AvatarIcon_MarionetteNew.png"
-
-                # Check avatarInfoList
-                avatar_list = data.get("avatarInfoList", [])
-                if not avatar_list:
-                    return {
-                        "success": True,
-                        "status": "hidden_showcase",
-                        "player": {
-                            "uid": cleaned_uid,
-                            "nickname": nickname,
-                            "level": level,
-                            "worldLevel": world_level,
-                            "signature": signature,
-                            "achievements": achievements,
-                            "abyss": abyss_str,
-                            "towerFloor": tower_floor,
-                            "towerStar": tower_star,
-                            "stygianSeconds": stygian_seconds,
-                            "stygianIndex": stygian_index,
-                            "theaterAct": theater_act,
-                            "theaterMode": theater_mode,
-                            "theaterStar": theater_star,
-                            "profileIconUrl": profile_icon_url,
-                            "characterCount": 0
-                        },
-                        "characters": [],
-                        "warning": (
-                            f"Player \"{nickname}\" (AR {level}) found, but your in-game Character Showcase details are private! "
-                            "In Genshin Impact: Open Paimon Menu ➔ Edit Profile ➔ Turn ON \"Show Character Details\"."
-                        )
-                    }
-
-                parsed_avatars = []
-                for a_raw in avatar_list:
-                    try:
-                        p_char = parse_avatar(a_raw)
-                        parsed_avatars.append(p_char)
-                    except Exception as e:
-                        print(f"Error parsing avatar: {e}")
-
-                return {
-                    "success": True,
-                    "status": "live",
-                    "player": {
-                        "uid": cleaned_uid,
-                        "nickname": nickname,
-                        "level": level,
-                        "worldLevel": world_level,
-                        "signature": signature,
-                        "achievements": achievements,
-                        "abyss": abyss_str,
-                        "towerFloor": tower_floor,
-                        "towerStar": tower_star,
-                        "stygianSeconds": stygian_seconds,
-                        "stygianIndex": stygian_index,
-                        "theaterAct": theater_act,
-                        "theaterMode": theater_mode,
-                        "theaterStar": theater_star,
-                        "profileIconUrl": profile_icon_url,
-                        "characterCount": len(parsed_avatars)
-                    },
-                    "characters": parsed_avatars,
-                    "message": f"Successfully loaded {len(parsed_avatars)} showcased characters for {nickname}!"
-                }
-
-    except urllib.error.HTTPError as e:
-        if e.code == 400:
-            return {"success": False, "error": f"Invalid UID '{cleaned_uid}'. Please check your UID digits."}
-        elif e.code == 404:
-            return {"success": False, "error": f"Player with UID {cleaned_uid} was not found on Genshin Impact servers."}
-        elif e.code == 424:
-            return {"success": False, "error": "Enka Network is undergoing game maintenance. Please try again shortly."}
-        elif e.code == 429:
-            return {"success": False, "error": "Enka Network rate limit reached. Please wait a moment before trying again."}
+                # Save cache for reliability
+                try:
+                    cache_path = os.path.join(DATA_DIR, f"live_cache_{cleaned_uid}.json")
+                    with open(cache_path, "w", encoding="utf-8") as cf:
+                        json.dump(data, cf)
+                except Exception:
+                    pass
+    except Exception as net_err:
+        # Check local cache fallback
+        cache_path = os.path.join(DATA_DIR, f"live_cache_{cleaned_uid}.json")
+        if os.path.exists(cache_path):
+            try:
+                with open(cache_path, "r", encoding="utf-8") as cf:
+                    data = json.load(cf)
+            except Exception:
+                data = None
         else:
-            return {"success": False, "error": f"Enka Network returned HTTP Error {e.code}: {e.reason}"}
+            data = None
 
-    except Exception as e:
-        return {"success": False, "error": f"Network error connecting to Enka Network: {type(e).__name__} ({str(e)})"}
+        if not data:
+            if isinstance(net_err, urllib.error.HTTPError):
+                if net_err.code == 400:
+                    return {"success": False, "error": f"Invalid UID '{cleaned_uid}'. Please check your UID digits."}
+                elif net_err.code == 404:
+                    return {"success": False, "error": f"Player with UID {cleaned_uid} was not found on Genshin Impact servers."}
+                elif net_err.code == 424:
+                    return {"success": False, "error": "Enka Network is undergoing game maintenance. Please try again shortly."}
+                elif net_err.code == 429:
+                    return {"success": False, "error": "Enka Network rate limit reached. Please wait a moment before trying again."}
+                else:
+                    return {"success": False, "error": f"Enka Network returned HTTP Error {net_err.code}: {net_err.reason}"}
+            return {"success": False, "error": f"Network error connecting to Enka Network: {type(net_err).__name__} ({str(net_err)})"}
+
+    # Process retrieved data
+    try:
+        p_info = data.get("playerInfo", {})
+        nickname = p_info.get("nickname", "Traveler")
+        level = p_info.get("level", 60)
+        world_level = p_info.get("worldLevel", 8)
+        signature = p_info.get("signature", "")
+        achievements = p_info.get("finishAchievementNum", 0)
+        
+        # Spiral Abyss floor & chamber
+        tower_floor = p_info.get("towerFloorIndex", 0)
+        tower_chamber = p_info.get("towerLevelIndex", 0)
+        tower_star = p_info.get("towerStarIndex", 0)
+        abyss_str = f"Floor {tower_floor} - Chamber {tower_chamber}" if tower_floor else "Not Cleared"
+
+        # Stygian Nymph
+        stygian_seconds = p_info.get("stygianSeconds", 0)
+        stygian_index = p_info.get("stygianIndex", 0)
+
+        # Theater (Imaginarium Theater)
+        theater_act = p_info.get("theaterActIndex", 0)
+        theater_mode = p_info.get("theaterModeIndex", 0)
+        theater_star = p_info.get("theaterStarIndex", 0)
+
+        # Profile picture
+        profile_pic = p_info.get("profilePicture", {})
+        avatar_pic_id = profile_pic.get("avatarId")
+        pic_id = profile_pic.get("id")
+
+        if pic_id == 11600 or avatar_pic_id == 10000133:
+            profile_icon_url = "https://enka.network/ui/UI_AvatarIcon_MarionetteNew.png"
+        elif avatar_pic_id and str(avatar_pic_id) in CUSTOM_CHARACTERS:
+            profile_icon_url = CUSTOM_CHARACTERS[str(avatar_pic_id)]["iconUrl"]
+        elif avatar_pic_id and str(avatar_pic_id) in CHARACTERS_DATA:
+            p_side_icon = CHARACTERS_DATA[str(avatar_pic_id)].get("SideIconName", "UI_AvatarIcon_Side_PlayerBoy")
+            profile_icon_url = f"https://enka.network/ui/{p_side_icon}.png"
+        else:
+            profile_icon_url = "https://enka.network/ui/UI_AvatarIcon_MarionetteNew.png"
+
+        # Check avatarInfoList
+        avatar_list = data.get("avatarInfoList", [])
+        if not avatar_list:
+            return {
+                "success": True,
+                "status": "hidden_showcase",
+                "player": {
+                    "uid": cleaned_uid,
+                    "nickname": nickname,
+                    "level": level,
+                    "worldLevel": world_level,
+                    "signature": signature,
+                    "achievements": achievements,
+                    "abyss": abyss_str,
+                    "towerFloor": tower_floor,
+                    "towerStar": tower_star,
+                    "stygianSeconds": stygian_seconds,
+                    "stygianIndex": stygian_index,
+                    "theaterAct": theater_act,
+                    "theaterMode": theater_mode,
+                    "theaterStar": theater_star,
+                    "profileIconUrl": profile_icon_url,
+                    "characterCount": 0
+                },
+                "characters": [],
+                "warning": (
+                    f"Player \"{nickname}\" (AR {level}) found, but your in-game Character Showcase details are private! "
+                    "In Genshin Impact: Open Paimon Menu ➔ Edit Profile ➔ Turn ON \"Show Character Details\"."
+                )
+            }
+
+        parsed_avatars = []
+        for a_raw in avatar_list:
+            try:
+                p_char = parse_avatar(a_raw)
+                parsed_avatars.append(p_char)
+            except Exception as e:
+                print(f"Error parsing avatar: {e}")
+
+        return {
+            "success": True,
+            "status": "live",
+            "player": {
+                "uid": cleaned_uid,
+                "nickname": nickname,
+                "level": level,
+                "worldLevel": world_level,
+                "signature": signature,
+                "achievements": achievements,
+                "abyss": abyss_str,
+                "towerFloor": tower_floor,
+                "towerStar": tower_star,
+                "stygianSeconds": stygian_seconds,
+                "stygianIndex": stygian_index,
+                "theaterAct": theater_act,
+                "theaterMode": theater_mode,
+                "theaterStar": theater_star,
+                "profileIconUrl": profile_icon_url,
+                "characterCount": len(parsed_avatars)
+            },
+            "characters": parsed_avatars,
+            "message": f"Successfully loaded {len(parsed_avatars)} showcased characters for {nickname}!"
+        }
+    except Exception as parse_err:
+        return {"success": False, "error": f"Error parsing profile data: {str(parse_err)}"}

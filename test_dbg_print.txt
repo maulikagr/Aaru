@@ -1,0 +1,31 @@
+
+options iteration=1 duration=20 debug=true;
+target lvl=90 resist=0.1;
+
+yaemiko char lvl=70/70 cons=0 talent=6,6,6;
+yaemiko add weapon="lostprayertothesacredwinds" refine=1 lvl=50/50;
+
+escoffier char lvl=70/70 cons=0 talent=1,6,1;
+escoffier add weapon="fracturedhalo" refine=1 lvl=90/90;
+
+odette char lvl=70/70 cons=0 talent=8,8,8;
+odette add weapon="exaiphanesblade" refine=3 lvl=90/90;
+
+sandrone char lvl=90/90 cons=0 talent=10,10,10;
+sandrone add weapon="athousandblazingsuns" refine=1 lvl=90/90;
+
+active yaemiko;
+yaemiko skill:3;
+escoffier skill;
+odette skill:2;
+sandrone skill;
+sandrone charge[beams=1];
+sandrone charge[beams=1];
+sandrone charge[beams=1];
+sandrone skill;
+sandrone charge[beams=1];
+sandrone charge[beams=1];
+sandrone charge[beams=1];
+print("burst ready?", .sandrone.burst.ready);
+print("energy:", .sandrone.energy);
+print("skill ready?", .sandrone.skill.ready);
