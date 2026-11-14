@@ -1,5 +1,5 @@
 /**
- * Genshin Impact Enka Profile Viewer
+ * Aaru - Genshin Impact Enka Profile Viewer
  * Frontend Application Controller
  */
 

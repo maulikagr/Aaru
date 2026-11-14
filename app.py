@@ -1,5 +1,5 @@
 """
-Genshin Impact Enka Profile Viewer
+Aaru - Genshin Impact Profile Viewer & Team DPS Calculator
 Flask Web Application
 """
 import os
@@ -74,5 +74,5 @@ def calculate_dps():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))
-    print(f"Starting Genshin Enka Viewer on http://localhost:{port}")
+    print(f"Starting Aaru on http://localhost:{port}")
     app.run(host="0.0.0.0", port=port, debug=True)

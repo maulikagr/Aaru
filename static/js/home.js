@@ -1,5 +1,5 @@
 /**
- * Genshin Impact Enka Viewer - Homepage Controller
+ * Aaru - Genshin Impact Build & Damage Explorer Controller
  * Manages search, recently checked accounts (localStorage), and table rendering
  */
 

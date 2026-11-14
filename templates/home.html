@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Genshin Impact // Enka Profile Viewer & Damage Explorer</title>
+  <title>Aaru // Genshin Impact Build & Damage Explorer</title>
   <script>window.__ACTIVE_TAB__ = "{{ active_tab or 'showcase' }}";</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -136,21 +136,6 @@
       transform: translateY(-1px);
     }
 
-    /* Element Badges */
-    .elem-rune {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 800;
-      transition: transform 0.2s;
-    }
-    .elem-rune:hover {
-      transform: scale(1.2);
-    }
 
     /* Table Container Styling */
     .accounts-card {
@@ -271,22 +256,6 @@
   <!-- MAIN WRAPPER -->
   <div class="relative z-10 flex-1 flex flex-col w-full max-w-5xl mx-auto px-4 pt-10 pb-16">
 
-    <!-- Top Badge & Element Runes -->
-    <div class="flex items-center justify-between mb-8">
-      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono text-[11px] font-semibold tracking-wider">
-        <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-        <span>✦ ENKA.NETWORK LIVE SYNC</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <span class="elem-rune bg-amber-500/15 text-amber-400 border border-amber-500/30" title="Geo">🪨</span>
-        <span class="elem-rune bg-cyan-500/15 text-cyan-400 border border-cyan-500/30" title="Hydro">💧</span>
-        <span class="elem-rune bg-purple-500/15 text-purple-400 border border-purple-500/30" title="Electro">⚡</span>
-        <span class="elem-rune bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" title="Dendro">🌿</span>
-        <span class="elem-rune bg-rose-500/15 text-rose-400 border border-rose-500/30" title="Pyro">🔥</span>
-        <span class="elem-rune bg-sky-500/15 text-sky-400 border border-sky-500/30" title="Cryo">❄️</span>
-        <span class="elem-rune bg-teal-500/15 text-teal-400 border border-teal-500/30" title="Anemo">🌪️</span>
-      </div>
-    </div>
 
     <!-- Hero Title -->
     <header class="text-center mb-8">
@@ -295,14 +264,14 @@
           <i data-lucide="sparkles" class="w-7 h-7 text-amber-400"></i>
         </div>
       </div>
-      <h1 class="cinzel-title text-3xl sm:text-4xl font-black text-white tracking-wider">
-        GENSHIN IMPACT
+      <h1 class="cinzel-title text-4xl sm:text-5xl font-black tracking-widest bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-300 bg-clip-text text-transparent">
+        AARU
       </h1>
-      <p class="text-sm font-semibold tracking-wider bg-gradient-to-r from-amber-200 via-amber-400 to-orange-400 bg-clip-text text-transparent mt-1">
-        ENKA PROFILE VIEWER & DAMAGE EXPLORER
+      <p class="text-xs sm:text-sm font-semibold tracking-wider text-slate-300 uppercase font-mono mt-1">
+        Genshin Impact Build & Damage Explorer
       </p>
       <p class="text-xs sm:text-sm text-slate-400 mt-2 max-w-lg mx-auto leading-relaxed">
-        Inspect showcased characters, verify artifact CV scores, and calculate combat damage outputs directly from Enka Network.
+        Inspect showcased characters, verify artifact CV scores, and calculate combat damage outputs.
       </p>
     </header>
 
@@ -482,7 +451,7 @@
   <!-- FOOTER -->
   <footer class="relative z-10 border-t border-slate-800/60 py-6 mt-auto text-center text-xs text-slate-500">
     <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-[11px]">
-      <div>Genshin Impact Enka Viewer • Powered by Enka.Network API</div>
+      <div>Aaru • Genshin Impact Theorycraft Tool • Powered by Enka.Network API</div>
       <div class="text-slate-600">Assets &copy; miHoYo / HoYoverse • Non-commercial theorycraft tool</div>
     </div>
   </footer>
