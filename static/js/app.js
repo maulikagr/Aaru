@@ -132,6 +132,25 @@ function setupEventListeners() {
     el.btnCloseStatus.onclick = () => hideStatusBanner();
   }
 
+  // Initialize sketch tabs in profile header and page
+  const headerTabsContainer = document.getElementById("header-main-tabs");
+  if (headerTabsContainer && window.SketchTabs) {
+    window.headerSketchTabs = window.SketchTabs.init(headerTabsContainer, {
+      strokeColor: "#f59e0b",
+      roughness: 1.3,
+      onTabChange: (tabName) => switchTab(tabName)
+    });
+  }
+
+  const profileTabsContainer = document.getElementById("profile-page-tabs");
+  if (profileTabsContainer && window.SketchTabs) {
+    window.profileSketchTabs = window.SketchTabs.init(profileTabsContainer, {
+      strokeColor: "#f59e0b",
+      roughness: 1.3,
+      onTabChange: (tabName) => switchTab(tabName)
+    });
+  }
+
   // Tab switching listeners (both in header and on page)
   if (el.profileTabShowcase) el.profileTabShowcase.onclick = () => switchTab("showcase");
   if (el.profileTabDamageCalc) el.profileTabDamageCalc.onclick = () => switchTab("damage-calc");
@@ -158,6 +177,10 @@ function switchTab(tabName) {
     if (el.profileContentDamageCalc) el.profileContentDamageCalc.classList.add("hidden");
     if (el.profileContentShowcase) el.profileContentShowcase.classList.remove("hidden");
   }
+
+  // Synchronize sketch underlines
+  if (window.headerSketchTabs) window.headerSketchTabs.activate(tabName);
+  if (window.profileSketchTabs) window.profileSketchTabs.activate(tabName);
 }
 
 // Save profile summary to localStorage for the homepage

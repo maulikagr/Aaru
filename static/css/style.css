@@ -29,15 +29,22 @@ code, kbd, samp, pre, .font-mono {
 
 /* Character Tab Active State */
 .char-tab-btn {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(13, 19, 36, 0.75) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(51, 65, 85, 0.6) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 16px;
 }
 .char-tab-btn:hover {
   transform: translateY(-2px);
+  border-color: rgba(245, 158, 11, 0.5) !important;
+  background: rgba(20, 29, 52, 0.9) !important;
 }
 .char-tab-btn.active {
   transform: translateY(-2px);
   border-color: #f59e0b !important;
-  box-shadow: 0 0 16px -2px rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.12) !important;
+  box-shadow: 0 0 20px -2px rgba(245, 158, 11, 0.45);
 }
 
 /* Constellation Dots */
@@ -53,32 +60,38 @@ code, kbd, samp, pre, .font-mono {
   border: 1.5px solid rgba(255, 255, 255, 0.2);
   background: rgba(15, 23, 42, 0.8);
   color: #64748b;
-  backdrop-blur: 4px;
+  backdrop-filter: blur(4px);
   transition: all 0.2s;
 }
 .const-dot.active {
   border-color: #f59e0b;
-  background: rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.3);
   color: #fef08a;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
 }
 
 /* Element Styles */
-.elem-pyro { background-color: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); }
-.elem-hydro { background-color: rgba(6, 182, 212, 0.15); color: #38bdf8; border: 1px solid rgba(6, 182, 212, 0.35); }
-.elem-cryo { background-color: rgba(56, 189, 248, 0.15); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.35); }
-.elem-electro { background-color: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.35); }
-.elem-dendro { background-color: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); }
-.elem-anemo { background-color: rgba(20, 184, 166, 0.15); color: #2dd4bf; border: 1px solid rgba(20, 184, 166, 0.35); }
-.elem-geo { background-color: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.35); }
+.elem-pyro { background-color: rgba(239, 68, 68, 0.18); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.45); }
+.elem-hydro { background-color: rgba(6, 182, 212, 0.18); color: #38bdf8; border: 1px solid rgba(6, 182, 212, 0.45); }
+.elem-cryo { background-color: rgba(56, 189, 248, 0.18); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.45); }
+.elem-electro { background-color: rgba(168, 85, 247, 0.18); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.45); }
+.elem-dendro { background-color: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.45); }
+.elem-anemo { background-color: rgba(20, 184, 166, 0.18); color: #2dd4bf; border: 1px solid rgba(20, 184, 166, 0.45); }
+.elem-geo { background-color: rgba(234, 179, 8, 0.18); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.45); }
 
 /* Artifact Card Mini Hover */
 .artifact-card {
-  transition: all 0.15s ease-in-out;
+  background: rgba(13, 19, 36, 0.75) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(51, 65, 85, 0.6) !important;
+  border-radius: 14px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .artifact-card:hover {
-  border-color: #475569;
-  background-color: rgba(15, 23, 42, 0.95);
+  border-color: rgba(245, 158, 11, 0.5) !important;
+  background-color: rgba(20, 29, 52, 0.95) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.5);
 }
 
 /* Main View Tabs (Showcase vs Damage Calc) */
@@ -108,4 +121,75 @@ code, kbd, samp, pre, .font-mono {
   border-color: rgba(245, 158, 11, 0.4);
   box-shadow: 0 0 16px -2px rgba(245, 158, 11, 0.2);
 }
+
+/* ==========================================================================
+   Sketch Tabs Component (Hand-drawn underline & animated tabs)
+   ========================================================================== */
+.sketch-tabs-nav, .sketch-tab-list {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sketch-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #94a3b8;
+  outline: none;
+  transition: color 0.15s ease;
+  user-select: none;
+  z-index: 2;
+}
+
+.sketch-tab:hover {
+  color: #f1f5f9;
+}
+
+.sketch-tab.active {
+  font-weight: 700;
+  color: #f59e0b; /* Accent color */
+}
+
+.sketch-underline {
+  position: absolute;
+  height: 12px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.sketch-underline svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.sketch-panel, .sketch-tab-panel {
+  display: none;
+}
+
+.sketch-panel.active, .sketch-tab-panel.active {
+  display: block;
+  animation: sketchFadeIn 220ms ease forwards;
+}
+
+@keyframes sketchFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 

@@ -168,6 +168,8 @@ function goToProfile(uid) {
   window.location.href = `/profile/${cleaned}`;
 }
 
+let homeNavSketchTabs = null;
+
 // Tab Switching
 function switchHomeTab(tabName) {
   const tabShowcase = document.getElementById("tab-home-showcase");
@@ -186,6 +188,10 @@ function switchHomeTab(tabName) {
     if (contentDamageCalc) contentDamageCalc.classList.add("hidden");
     if (contentShowcase) contentShowcase.classList.remove("hidden");
   }
+
+  if (homeNavSketchTabs) {
+    homeNavSketchTabs.activate(tabName);
+  }
 }
 
 // Initialization
@@ -201,11 +207,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Tab listeners
-  const tabShowcase = document.getElementById("tab-home-showcase");
-  const tabDamageCalc = document.getElementById("tab-home-damage-calc");
-  if (tabShowcase) tabShowcase.addEventListener("click", () => switchHomeTab("showcase"));
-  if (tabDamageCalc) tabDamageCalc.addEventListener("click", () => switchHomeTab("damage-calc"));
+  // Initialize main navigation sketch tabs
+  const navContainer = document.getElementById("home-main-tabs");
+  if (navContainer && window.SketchTabs) {
+    homeNavSketchTabs = window.SketchTabs.init(navContainer, {
+      strokeColor: "#f59e0b",
+      roughness: 1.4,
+      onTabChange: (tabName) => {
+        switchHomeTab(tabName);
+      }
+    });
+  }
+
+  // Initialize sketch demo tabs if present
+  const demoTabsContainer = document.getElementById("sketch-demo-tabs");
+  if (demoTabsContainer && window.SketchTabs) {
+    window.SketchTabs.init(demoTabsContainer, {
+      strokeColor: "#f59e0b",
+      roughness: 1.5
+    });
+  }
 
   // Check if damage-calc tab should be active initially
   if (window.__ACTIVE_TAB__ === "damage_calc" || window.location.hash === "#damage-calc") {

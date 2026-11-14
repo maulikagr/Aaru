@@ -3,285 +3,553 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Genshin Impact Enka Viewer</title>
+  <title>Genshin Impact // Enka Profile Viewer & Damage Explorer</title>
   <script>window.__ACTIVE_TAB__ = "{{ active_tab or 'showcase' }}";</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cinzel:wght@700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="/static/css/style.css">
+  <script src="/static/js/sketch-tabs.js"></script>
+
   <style>
     body {
-      background: #0d1117;
+      background-color: #060913;
+      color: #f1f5f9;
+      font-family: 'Plus Jakarta Sans', sans-serif;
       min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
     }
 
-    /* Hero background with subtle Genshin vibe */
-    .hero-bg {
-      background: radial-gradient(ellipse at 50% -20%, rgba(59,130,246,0.08) 0%, transparent 60%),
-                  radial-gradient(ellipse at 80% 50%, rgba(168,85,247,0.05) 0%, transparent 50%),
-                  radial-gradient(ellipse at 20% 80%, rgba(245,158,11,0.04) 0%, transparent 50%);
+    /* Ambient Nebulae Background */
+    .celestial-nebulae {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 18% 15%, rgba(245, 158, 11, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 82% 20%, rgba(56, 189, 248, 0.14) 0%, transparent 48%),
+        radial-gradient(circle at 50% 70%, rgba(168, 85, 247, 0.10) 0%, transparent 55%),
+        radial-gradient(circle at 75% 85%, rgba(16, 185, 129, 0.08) 0%, transparent 45%);
     }
 
-    /* Search box styling */
-    .search-container {
-      max-width: 560px;
-      margin: 0 auto;
+    /* Star Particle Canvas */
+    #starfield-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
     }
-    .search-input {
+
+    .cinzel-title {
+      font-family: 'Cinzel', serif;
+      letter-spacing: 2.5px;
+    }
+
+    /* Glassmorphic Search Card */
+    .search-hero-card {
+      background: rgba(13, 19, 36, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 24px;
+      box-shadow: 
+        0 20px 45px -10px rgba(0, 0, 0, 0.8),
+        0 0 30px -5px rgba(245, 158, 11, 0.15),
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.12);
+      transition: all 0.3s;
+    }
+
+    .search-hero-card:focus-within {
+      border-color: rgba(245, 158, 11, 0.6);
+      box-shadow: 
+        0 25px 55px -10px rgba(0, 0, 0, 0.9),
+        0 0 40px -2px rgba(245, 158, 11, 0.25);
+    }
+
+    .genshin-search-input {
       width: 100%;
-      padding: 14px 20px;
-      background: rgba(22, 27, 34, 0.9);
-      border: 1px solid #30363d;
-      border-radius: 8px;
-      color: #c9d1d9;
-      font-size: 15px;
-      text-align: center;
+      padding: 16px 22px;
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 500;
+      font-family: 'JetBrains Mono', monospace;
       outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .search-input::placeholder {
-      color: #484f58;
-    }
-    .search-input:focus {
-      border-color: #58a6ff;
-      box-shadow: 0 0 0 3px rgba(88,166,255,0.1);
+    .genshin-search-input::placeholder {
+      color: #64748b;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px;
     }
 
-    /* Table styling */
+    /* Golden 5-Star Button */
+    .btn-genshin-fetch {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+      color: #090d16;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 1px;
+      padding: 14px 26px;
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 10px 25px -4px rgba(245, 158, 11, 0.45);
+      cursor: pointer;
+      user-select: none;
+      flex-shrink: 0;
+    }
+    .btn-genshin-fetch:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px -4px rgba(245, 158, 11, 0.65);
+      filter: brightness(1.08);
+    }
+    .btn-genshin-fetch:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    /* Preset Chip */
+    .preset-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .preset-pill:hover {
+      border-color: #f59e0b;
+      color: #fde68a;
+      background: rgba(245, 158, 11, 0.12);
+      transform: translateY(-1px);
+    }
+
+    /* Element Badges */
+    .elem-rune {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      transition: transform 0.2s;
+    }
+    .elem-rune:hover {
+      transform: scale(1.2);
+    }
+
+    /* Table Container Styling */
+    .accounts-card {
+      background: rgba(13, 19, 36, 0.65);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8);
+    }
+
     .accounts-table {
       width: 100%;
       border-collapse: separate;
       border-spacing: 0;
     }
     .accounts-table thead th {
-      padding: 10px 14px;
-      font-size: 12px;
-      font-weight: 600;
-      color: #8b949e;
+      padding: 14px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
       text-align: left;
-      border-bottom: 1px solid #21262d;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.6);
       white-space: nowrap;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      cursor: pointer;
+      letter-spacing: 0.08em;
       user-select: none;
     }
     .accounts-table thead th:hover {
-      color: #c9d1d9;
+      color: #f59e0b;
     }
     .accounts-table tbody tr {
       cursor: pointer;
-      transition: background 0.15s;
+      transition: all 0.15s ease-in-out;
     }
     .accounts-table tbody tr:hover {
-      background: rgba(56, 139, 253, 0.06);
+      background: rgba(245, 158, 11, 0.06);
     }
     .accounts-table tbody td {
-      padding: 10px 14px;
+      padding: 13px 16px;
       font-size: 13px;
-      color: #c9d1d9;
-      border-bottom: 1px solid rgba(33, 38, 45, 0.6);
+      color: #cbd5e1;
+      border-bottom: 1px solid rgba(30, 41, 59, 0.5);
       white-space: nowrap;
     }
 
-    /* Server region badge */
     .server-badge {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 2px 6px;
-      border-radius: 3px;
+      padding: 2px 7px;
+      border-radius: 4px;
       font-size: 10px;
-      font-weight: 700;
+      font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
-    .server-na { background: #da3633; color: #fff; }
-    .server-eu { background: #1f6feb; color: #fff; }
-    .server-asia { background: #238636; color: #fff; }
-    .server-sar { background: #9e6a03; color: #fff; }
+    .server-na { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .server-eu { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }
+    .server-asia { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .server-sar { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
 
-    /* AR badge */
     .ar-badge {
       display: inline-flex;
-      padding: 2px 7px;
-      border-radius: 4px;
+      padding: 2px 8px;
+      border-radius: 6px;
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 800;
       font-family: 'JetBrains Mono', monospace;
     }
-    .ar-60 { background: #da3633; color: #fff; }
-    .ar-high { background: #f0883e; color: #fff; }
-    .ar-mid { background: #f0883e; color: #fff; }
+    .ar-60 { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+    .ar-high { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; }
+    .ar-mid { background: #334155; color: #cbd5e1; }
 
-    /* Stat cells */
-    .stat-trophy { color: #f0883e; }
-    .stat-stygian { color: #d2a8ff; }
-    .stat-abyss { color: #58a6ff; }
-    .stat-theater { color: #8b949e; }
+    .stat-trophy { color: #fbbf24; }
+    .stat-stygian { color: #c084fc; }
+    .stat-abyss { color: #38bdf8; }
+    .stat-theater { color: #94a3b8; }
 
-    /* Nickname cell */
     .nickname-cell {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
     .nickname-avatar {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       object-fit: cover;
-      border: 1px solid #30363d;
-      background: #161b22;
+      border: 1.5px solid rgba(245, 158, 11, 0.5);
+      background: #0f172a;
     }
 
-    /* Filter bar */
-    .filter-bar {
-      padding: 8px 14px;
-      font-size: 13px;
-      color: #484f58;
-      border-bottom: 1px solid #21262d;
-    }
-
-    /* Empty state */
-    .empty-state {
-      text-align: center;
-      padding: 48px 20px;
-      color: #484f58;
-    }
-    .empty-state i {
-      margin-bottom: 12px;
-    }
-
-    /* Table container */
-    .table-container {
-      background: rgba(13, 17, 23, 0.8);
-      border: 1px solid #21262d;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    /* Page counter */
-    .page-info {
-      padding: 8px 14px;
-      text-align: right;
-      font-size: 12px;
-      color: #484f58;
-      border-top: 1px solid #21262d;
-    }
-
-    /* Delete button */
     .btn-delete {
       opacity: 0;
       transition: opacity 0.15s;
-      padding: 2px;
-      border-radius: 4px;
-      color: #484f58;
+      padding: 4px;
+      border-radius: 6px;
+      color: #64748b;
     }
     .accounts-table tbody tr:hover .btn-delete {
       opacity: 1;
     }
     .btn-delete:hover {
-      color: #f85149;
-      background: rgba(248, 81, 73, 0.1);
+      color: #f87171;
+      background: rgba(239, 68, 68, 0.15);
     }
   </style>
 </head>
-<body class="hero-bg text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
+<body class="flex flex-col selection:bg-amber-500 selection:text-slate-950">
 
-  <!-- MAIN CONTENT -->
-  <main class="flex-1 w-full max-w-5xl mx-auto px-4 pt-16 pb-12">
+  <!-- Ambient Nebulae -->
+  <div class="celestial-nebulae"></div>
 
-    <!-- Title -->
-    <div class="text-center mb-4">
-      <h1 class="text-lg font-semibold text-white tracking-tight flex items-center justify-center gap-2">
-        <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-500 via-indigo-500 to-amber-500 flex items-center justify-center">
-          <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
-        </div>
-        Genshin Impact <span class="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">Enka Viewer</span>
-      </h1>
+  <!-- Twinkling Starfield Canvas -->
+  <canvas id="starfield-canvas"></canvas>
+
+  <!-- MAIN WRAPPER -->
+  <div class="relative z-10 flex-1 flex flex-col w-full max-w-5xl mx-auto px-4 pt-10 pb-16">
+
+    <!-- Top Badge & Element Runes -->
+    <div class="flex items-center justify-between mb-8">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono text-[11px] font-semibold tracking-wider">
+        <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+        <span>✦ ENKA.NETWORK LIVE SYNC</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="elem-rune bg-amber-500/15 text-amber-400 border border-amber-500/30" title="Geo">🪨</span>
+        <span class="elem-rune bg-cyan-500/15 text-cyan-400 border border-cyan-500/30" title="Hydro">💧</span>
+        <span class="elem-rune bg-purple-500/15 text-purple-400 border border-purple-500/30" title="Electro">⚡</span>
+        <span class="elem-rune bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" title="Dendro">🌿</span>
+        <span class="elem-rune bg-rose-500/15 text-rose-400 border border-rose-500/30" title="Pyro">🔥</span>
+        <span class="elem-rune bg-sky-500/15 text-sky-400 border border-sky-500/30" title="Cryo">❄️</span>
+        <span class="elem-rune bg-teal-500/15 text-teal-400 border border-teal-500/30" title="Anemo">🌪️</span>
+      </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <div class="flex items-center justify-center gap-2.5 mb-8">
-      <button id="tab-home-showcase" class="main-tab-btn active">
-        <i data-lucide="layers" class="w-4 h-4"></i>
-        <span>Showcase</span>
-      </button>
-      <button id="tab-home-damage-calc" class="main-tab-btn">
-        <i data-lucide="calculator" class="w-4 h-4"></i>
-        <span>Damage Calc</span>
-      </button>
+    <!-- Hero Title -->
+    <header class="text-center mb-8">
+      <div class="w-14 h-14 mx-auto mb-3 rounded-2xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 p-0.5 shadow-xl shadow-amber-500/20 flex items-center justify-center">
+        <div class="w-full h-full bg-slate-950/90 rounded-[14px] flex items-center justify-center">
+          <i data-lucide="sparkles" class="w-7 h-7 text-amber-400"></i>
+        </div>
+      </div>
+      <h1 class="cinzel-title text-3xl sm:text-4xl font-black text-white tracking-wider">
+        GENSHIN IMPACT
+      </h1>
+      <p class="text-sm font-semibold tracking-wider bg-gradient-to-r from-amber-200 via-amber-400 to-orange-400 bg-clip-text text-transparent mt-1">
+        ENKA PROFILE VIEWER & DAMAGE EXPLORER
+      </p>
+      <p class="text-xs sm:text-sm text-slate-400 mt-2 max-w-lg mx-auto leading-relaxed">
+        Inspect showcased characters, verify artifact CV scores, and calculate combat damage outputs directly from Enka Network.
+      </p>
+    </header>
+
+    <!-- Navigation Tabs with Hand-Drawn Sketch Underline -->
+    <div class="flex items-center justify-center mb-8">
+      <div id="home-main-tabs" class="sketch-tabs-nav flex items-center gap-4 bg-slate-900/80 border border-slate-800/90 px-4 py-1.5 rounded-2xl shadow-xl backdrop-blur-md" data-sketch-color="#f59e0b" data-roughness="1.4">
+        <button id="tab-home-showcase" class="sketch-tab active" data-tab="showcase">
+          <i data-lucide="layers" class="w-4 h-4"></i>
+          <span>Showcase Profiles</span>
+        </button>
+        <button id="tab-home-damage-calc" class="sketch-tab" data-tab="damage-calc">
+          <i data-lucide="calculator" class="w-4 h-4"></i>
+          <span>Damage Calculator</span>
+        </button>
+      </div>
     </div>
 
     <!-- TAB 1: SHOWCASE CONTENT -->
     <div id="home-content-showcase" class="space-y-8">
-      <!-- Search Section -->
-      <div>
-        <div class="text-center text-sm text-slate-400 mb-4">Enter UID / nickname</div>
-        <div class="search-container">
+      <!-- Search Input Section -->
+      <div class="max-w-2xl mx-auto space-y-3">
+        <div class="search-hero-card p-2 flex items-center gap-2">
+          <div class="pl-3.5 text-amber-400 flex items-center justify-center">
+            <i data-lucide="compass" class="w-5 h-5"></i>
+          </div>
           <input
             type="text"
             id="search-input"
-            class="search-input"
-            placeholder="type here..."
+            class="genshin-search-input flex-1"
+            placeholder="Enter Genshin UID (e.g. 641874325)..."
             autocomplete="off"
             spellcheck="false"
           />
+          <button id="btn-search-go" class="btn-genshin-fetch" type="button">
+            <span>Fetch Profile</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Quick Demo Presets -->
+        <div class="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs">
+          <span class="text-slate-500 font-mono text-[11px] uppercase mr-1">Quick Presets:</span>
+          <button type="button" class="preset-pill" onclick="quickFillUid('641874325')">
+            <span class="text-amber-400">✦</span> NA: 641874325 (Huskies)
+          </button>
+          <button type="button" class="preset-pill" onclick="quickFillUid('700000000')">
+            <span class="text-cyan-400">✦</span> EU: 700000000
+          </button>
+          <button type="button" class="preset-pill" onclick="quickFillUid('800000000')">
+            <span class="text-purple-400">✦</span> Asia: 800000000
+          </button>
         </div>
       </div>
 
       <!-- Recently Checked Accounts Table -->
-      <div id="accounts-section">
-        <div class="table-container">
-          <div class="filter-bar">no filters</div>
+      <div id="accounts-section" class="space-y-3">
+        <div class="flex items-center justify-between px-1">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-300 font-mono uppercase tracking-wider">
+            <i data-lucide="history" class="w-4 h-4 text-amber-400"></i>
+            <span>Recently Inspected Travelers</span>
+          </div>
+          <div id="page-info" class="text-xs font-mono text-slate-500 hidden"></div>
+        </div>
 
+        <div class="accounts-card">
           <div class="overflow-x-auto">
             <table class="accounts-table" id="accounts-table">
               <thead>
                 <tr>
-                  <th style="width:40px">#</th>
-                  <th>Nickname</th>
+                  <th style="width:44px">#</th>
+                  <th>Traveler</th>
                   <th>Signature</th>
-                  <th></th><!-- AR badge column -->
-                  <th id="th-achievements" class="text-right">Achievements ▼</th>
+                  <th>World AR</th>
+                  <th id="th-achievements" class="text-right cursor-pointer">Achievements ▼</th>
                   <th>Stygian</th>
                   <th>Abyss</th>
                   <th>Theater</th>
-                  <th class="text-right">Last update</th>
-                  <th style="width:32px"></th>
+                  <th class="text-right">Last Sync</th>
+                  <th style="width:36px"></th>
                 </tr>
               </thead>
               <tbody id="accounts-tbody">
-                <!-- Rendered by home.js -->
+                <!-- Rendered dynamically by home.js -->
               </tbody>
             </table>
           </div>
 
-          <!-- Empty state (shown when no accounts) -->
-          <div id="empty-state" class="empty-state hidden">
-            <i data-lucide="search" class="w-10 h-10 mx-auto text-slate-600 mb-3 block"></i>
-            <div class="text-sm text-slate-500 font-medium">No recently checked accounts</div>
-            <div class="text-xs text-slate-600 mt-1">Enter a UID above to look up a player profile</div>
+          <!-- Empty State -->
+          <div id="empty-state" class="p-12 text-center text-slate-500 hidden">
+            <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-amber-400">
+              <i data-lucide="compass" class="w-6 h-6"></i>
+            </div>
+            <div class="text-sm font-semibold text-slate-400">No recently checked travelers</div>
+            <div class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+              Enter your 9-digit UID above or click one of the quick presets to inspect your character showcase.
+            </div>
           </div>
-
-          <div id="page-info" class="page-info hidden"></div>
         </div>
       </div>
     </div>
 
-    <!-- TAB 2: DAMAGE CALC CONTENT (Completely empty for now) -->
-    <div id="home-content-damage-calc" class="hidden"></div>
+    <!-- TAB 2: DAMAGE CALC CONTENT -->
+    <div id="home-content-damage-calc" class="hidden space-y-6">
+      <div class="max-w-xl mx-auto bg-slate-900/80 border border-slate-800/90 rounded-2xl p-6 shadow-xl space-y-6 sketch-tabs-wrapper backdrop-blur-md">
+        <div class="text-center space-y-1">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+            <span>DoodleUI Sketch Tabs Engine</span>
+          </div>
+          <h3 class="text-lg font-bold text-white tracking-tight pt-2">Damage Formula Theorycrafting</h3>
+          <p class="text-xs text-slate-400">Procedural hand-drawn underline with real-time sliding transitions.</p>
+        </div>
 
-  </main>
+        <div class="flex items-center justify-center border-b border-slate-800 pb-2">
+          <div id="sketch-demo-tabs" class="sketch-tab-list flex items-center gap-4" data-sketch-color="#f59e0b" data-roughness="1.5">
+            <button class="sketch-tab active" data-tab="ink">
+              <i data-lucide="pen-tool" class="w-4 h-4"></i>
+              <span>Ink</span>
+            </button>
+            <button class="sketch-tab" data-tab="wash">
+              <i data-lucide="palette" class="w-4 h-4"></i>
+              <span>Wash</span>
+            </button>
+            <button class="sketch-tab" data-tab="paper">
+              <i data-lucide="file-text" class="w-4 h-4"></i>
+              <span>Paper</span>
+            </button>
+            <button class="sketch-tab" data-tab="damage">
+              <i data-lucide="swords" class="w-4 h-4"></i>
+              <span>Theorycraft</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="pt-2">
+          <div class="sketch-panel active space-y-3" data-panel="ink">
+            <img src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=600&auto=format&fit=crop&q=80" alt="Ink Art" class="w-full h-36 object-cover rounded-xl border border-slate-800" />
+            <div class="p-3 bg-slate-950/70 rounded-xl border border-slate-800/80">
+              <h4 class="text-sm font-semibold text-amber-400">Real HTML Under a Sketch Underline</h4>
+              <p class="text-xs text-slate-400 mt-1">Each tab change dynamically recalculates element dimensions and renders an organic wavy SVG path with procedural roughness.</p>
+            </div>
+          </div>
+
+          <div class="sketch-panel hidden space-y-3" data-panel="wash">
+            <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80" alt="Wash Texture" class="w-full h-36 object-cover rounded-xl border border-slate-800" />
+            <div class="p-3 bg-slate-950/70 rounded-xl border border-slate-800/80">
+              <h4 class="text-sm font-semibold text-cyan-400">Switching Tabs Redraws the Rule</h4>
+              <p class="text-xs text-slate-400 mt-1">A smooth sliding CSS transition moves the underline while a seeded pseudo-random generator redraws the organic hand-drawn path.</p>
+            </div>
+          </div>
+
+          <div class="sketch-panel hidden space-y-3" data-panel="paper">
+            <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&auto=format&fit=crop&q=80" alt="Paper Texture" class="w-full h-36 object-cover rounded-xl border border-slate-800" />
+            <div class="p-3 bg-slate-950/70 rounded-xl border border-slate-800/80">
+              <h4 class="text-sm font-semibold text-emerald-400">Responsive & Accessible</h4>
+              <p class="text-xs text-slate-400 mt-1">A ResizeObserver continuously monitors container resizing to keep the sketch underline aligned across all viewports.</p>
+            </div>
+          </div>
+
+          <div class="sketch-panel hidden space-y-3" data-panel="damage">
+            <div class="grid grid-cols-3 gap-2.5 text-center text-xs">
+              <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl">
+                <span class="text-slate-400 block text-[10px] uppercase">Base ATK</span>
+                <span class="text-base font-bold text-amber-400 font-mono">1,940</span>
+              </div>
+              <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl">
+                <span class="text-slate-400 block text-[10px] uppercase">CRIT Rate</span>
+                <span class="text-base font-bold text-cyan-400 font-mono">74.2%</span>
+              </div>
+              <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl">
+                <span class="text-slate-400 block text-[10px] uppercase">CRIT DMG</span>
+                <span class="text-base font-bold text-rose-400 font-mono">226.4%</span>
+              </div>
+            </div>
+            <div class="p-3 bg-slate-950/70 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
+              <span class="text-slate-300">Vaporize / Melt Amp Multiplier</span>
+              <span class="text-emerald-400 font-bold font-mono">2.0x (Reaction Capable)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
 
   <!-- FOOTER -->
-  <footer class="border-t border-slate-800/50 py-5 mt-auto text-center text-xs text-slate-600">
-    <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+  <footer class="relative z-10 border-t border-slate-800/60 py-6 mt-auto text-center text-xs text-slate-500">
+    <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-[11px]">
       <div>Genshin Impact Enka Viewer • Powered by Enka.Network API</div>
-      <div class="text-[11px] text-slate-700">Assets © miHoYo / HoYoverse • Non-commercial theorycraft tool</div>
+      <div class="text-slate-600">Assets &copy; miHoYo / HoYoverse • Non-commercial theorycraft tool</div>
     </div>
   </footer>
 
   <script src="/static/js/home.js"></script>
+
+  <script>
+    // 1. Starfield Twinkling Animation
+    const starCanvas = document.getElementById('starfield-canvas');
+    if (starCanvas) {
+      const starCtx = starCanvas.getContext('2d');
+      let stars = [];
+
+      function resizeStars() {
+        starCanvas.width = window.innerWidth;
+        starCanvas.height = window.innerHeight;
+        stars = Array.from({ length: 85 }).map(() => ({
+          x: Math.random() * starCanvas.width,
+          y: Math.random() * starCanvas.height,
+          size: Math.random() * 1.6 + 0.4,
+          alpha: Math.random() * 0.8 + 0.2,
+          speed: Math.random() * 0.012 + 0.004,
+        }));
+      }
+      resizeStars();
+      window.addEventListener('resize', resizeStars);
+
+      function drawStars() {
+        starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
+        stars.forEach(s => {
+          s.alpha += Math.sin(Date.now() * s.speed) * 0.006;
+          const bounded = Math.max(0.12, Math.min(0.85, s.alpha));
+          starCtx.fillStyle = `rgba(253, 230, 138, ${bounded})`;
+          starCtx.beginPath();
+          starCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+          starCtx.fill();
+        });
+        requestAnimationFrame(drawStars);
+      }
+      drawStars();
+    }
+
+    // 2. Fetch button action
+    const btnSearchGo = document.getElementById('btn-search-go');
+    const searchInput = document.getElementById('search-input');
+    if (btnSearchGo && searchInput) {
+      btnSearchGo.addEventListener('click', () => {
+        goToProfile(searchInput.value);
+      });
+    }
+
+    // 3. Quick fill helper
+    function quickFillUid(uid) {
+      if (searchInput) {
+        searchInput.value = uid;
+        goToProfile(uid);
+      }
+    }
+  </script>
 </body>
 </html>

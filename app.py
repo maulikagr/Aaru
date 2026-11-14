@@ -8,6 +8,9 @@ from flask_cors import CORS
 from enka_parser import fetch_and_parse_enka
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
+app.jinja_env.auto_reload = True
 CORS(app)
 
 @app.route("/")
@@ -21,6 +24,10 @@ def damage_calc():
 @app.route("/profile/<uid>")
 def profile(uid):
     return render_template("profile.html", uid=uid)
+
+@app.route("/login")
+def login():
+    return render_template("login.html")
 
 @app.route("/api/player", methods=["POST"])
 def get_player_profile():
@@ -36,4 +43,4 @@ def get_player_profile():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))
     print(f"Starting Genshin Enka Viewer on http://localhost:{port}")
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(host="0.0.0.0", port=port, debug=True)
