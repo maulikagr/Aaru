@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Genshin Impact Enka Viewer</title>
+  <script>window.__ACTIVE_TAB__ = "{{ active_tab or 'showcase' }}";</script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    body {
+      background: #0d1117;
+      min-height: 100vh;
+    }
+
+    /* Hero background with subtle Genshin vibe */
+    .hero-bg {
+      background: radial-gradient(ellipse at 50% -20%, rgba(59,130,246,0.08) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 50%, rgba(168,85,247,0.05) 0%, transparent 50%),
+                  radial-gradient(ellipse at 20% 80%, rgba(245,158,11,0.04) 0%, transparent 50%);
+    }
+
+    /* Search box styling */
+    .search-container {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    .search-input {
+      width: 100%;
+      padding: 14px 20px;
+      background: rgba(22, 27, 34, 0.9);
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #c9d1d9;
+      font-size: 15px;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-input::placeholder {
+      color: #484f58;
+    }
+    .search-input:focus {
+      border-color: #58a6ff;
+      box-shadow: 0 0 0 3px rgba(88,166,255,0.1);
+    }
+
+    /* Table styling */
+    .accounts-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    .accounts-table thead th {
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #8b949e;
+      text-align: left;
+      border-bottom: 1px solid #21262d;
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      user-select: none;
+    }
+    .accounts-table thead th:hover {
+      color: #c9d1d9;
+    }
+    .accounts-table tbody tr {
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .accounts-table tbody tr:hover {
+      background: rgba(56, 139, 253, 0.06);
+    }
+    .accounts-table tbody td {
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #c9d1d9;
+      border-bottom: 1px solid rgba(33, 38, 45, 0.6);
+      white-space: nowrap;
+    }
+
+    /* Server region badge */
+    .server-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .server-na { background: #da3633; color: #fff; }
+    .server-eu { background: #1f6feb; color: #fff; }
+    .server-asia { background: #238636; color: #fff; }
+    .server-sar { background: #9e6a03; color: #fff; }
+
+    /* AR badge */
+    .ar-badge {
+      display: inline-flex;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .ar-60 { background: #da3633; color: #fff; }
+    .ar-high { background: #f0883e; color: #fff; }
+    .ar-mid { background: #f0883e; color: #fff; }
+
+    /* Stat cells */
+    .stat-trophy { color: #f0883e; }
+    .stat-stygian { color: #d2a8ff; }
+    .stat-abyss { color: #58a6ff; }
+    .stat-theater { color: #8b949e; }
+
+    /* Nickname cell */
+    .nickname-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nickname-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid #30363d;
+      background: #161b22;
+    }
+
+    /* Filter bar */
+    .filter-bar {
+      padding: 8px 14px;
+      font-size: 13px;
+      color: #484f58;
+      border-bottom: 1px solid #21262d;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: #484f58;
+    }
+    .empty-state i {
+      margin-bottom: 12px;
+    }
+
+    /* Table container */
+    .table-container {
+      background: rgba(13, 17, 23, 0.8);
+      border: 1px solid #21262d;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    /* Page counter */
+    .page-info {
+      padding: 8px 14px;
+      text-align: right;
+      font-size: 12px;
+      color: #484f58;
+      border-top: 1px solid #21262d;
+    }
+
+    /* Delete button */
+    .btn-delete {
+      opacity: 0;
+      transition: opacity 0.15s;
+      padding: 2px;
+      border-radius: 4px;
+      color: #484f58;
+    }
+    .accounts-table tbody tr:hover .btn-delete {
+      opacity: 1;
+    }
+    .btn-delete:hover {
+      color: #f85149;
+      background: rgba(248, 81, 73, 0.1);
+    }
+  </style>
+</head>
+<body class="hero-bg text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 w-full max-w-5xl mx-auto px-4 pt-16 pb-12">
+
+    <!-- Title -->
+    <div class="text-center mb-4">
+      <h1 class="text-lg font-semibold text-white tracking-tight flex items-center justify-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-500 via-indigo-500 to-amber-500 flex items-center justify-center">
+          <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
+        </div>
+        Genshin Impact <span class="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">Enka Viewer</span>
+      </h1>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="flex items-center justify-center gap-2.5 mb-8">
+      <button id="tab-home-showcase" class="main-tab-btn active">
+        <i data-lucide="layers" class="w-4 h-4"></i>
+        <span>Showcase</span>
+      </button>
+      <button id="tab-home-damage-calc" class="main-tab-btn">
+        <i data-lucide="calculator" class="w-4 h-4"></i>
+        <span>Damage Calc</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: SHOWCASE CONTENT -->
+    <div id="home-content-showcase" class="space-y-8">
+      <!-- Search Section -->
+      <div>
+        <div class="text-center text-sm text-slate-400 mb-4">Enter UID / nickname</div>
+        <div class="search-container">
+          <input
+            type="text"
+            id="search-input"
+            class="search-input"
+            placeholder="type here..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+      </div>
+
+      <!-- Recently Checked Accounts Table -->
+      <div id="accounts-section">
+        <div class="table-container">
+          <div class="filter-bar">no filters</div>
+
+          <div class="overflow-x-auto">
+            <table class="accounts-table" id="accounts-table">
+              <thead>
+                <tr>
+                  <th style="width:40px">#</th>
+                  <th>Nickname</th>
+                  <th>Signature</th>
+                  <th></th><!-- AR badge column -->
+                  <th id="th-achievements" class="text-right">Achievements ▼</th>
+                  <th>Stygian</th>
+                  <th>Abyss</th>
+                  <th>Theater</th>
+                  <th class="text-right">Last update</th>
+                  <th style="width:32px"></th>
+                </tr>
+              </thead>
+              <tbody id="accounts-tbody">
+                <!-- Rendered by home.js -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty state (shown when no accounts) -->
+          <div id="empty-state" class="empty-state hidden">
+            <i data-lucide="search" class="w-10 h-10 mx-auto text-slate-600 mb-3 block"></i>
+            <div class="text-sm text-slate-500 font-medium">No recently checked accounts</div>
+            <div class="text-xs text-slate-600 mt-1">Enter a UID above to look up a player profile</div>
+          </div>
+
+          <div id="page-info" class="page-info hidden"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: DAMAGE CALC CONTENT (Completely empty for now) -->
+    <div id="home-content-damage-calc" class="hidden"></div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-800/50 py-5 mt-auto text-center text-xs text-slate-600">
+    <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div>Genshin Impact Enka Viewer • Powered by Enka.Network API</div>
+      <div class="text-[11px] text-slate-700">Assets © miHoYo / HoYoverse • Non-commercial theorycraft tool</div>
+    </div>
+  </footer>
+
+  <script src="/static/js/home.js"></script>
+</body>
+</html>

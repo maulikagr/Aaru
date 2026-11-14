@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Genshin Impact Enka Profile Viewer</title>
+  <script>window.__PROFILE_UID__ = "{{ uid }}";</script>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Custom Styling -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
+
+  <!-- TOP HEADER -->
+  <header class="border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-md sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <a href="/" class="flex items-center gap-3 no-underline text-inherit hover:opacity-80 transition">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-amber-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+          </div>
+          <div>
+            <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+              Genshin Impact <span class="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">Enka Profile Viewer</span>
+            </h1>
+            <p class="text-[11px] text-slate-400 flex items-center gap-1.5">
+              <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              Enka.network Live API Integration
+            </p>
+          </div>
+        </a>
+      </div>
+
+      <!-- Navigation Tabs in Header -->
+      <div class="flex items-center gap-2">
+        <button id="header-tab-showcase" class="main-tab-btn active">
+          <i data-lucide="layers" class="w-4 h-4"></i>
+          <span>Showcase</span>
+        </button>
+        <button id="header-tab-damage-calc" class="main-tab-btn">
+          <i data-lucide="calculator" class="w-4 h-4"></i>
+          <span>Damage Calc</span>
+        </button>
+      </div>
+
+      <!-- Quick Tips Badge / Home Link -->
+      <div class="text-xs text-slate-400 hidden sm:flex items-center gap-3">
+        <a href="/" class="text-xs text-slate-400 hover:text-amber-400 flex items-center gap-1.5 transition">
+          <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+          <span>Change UID</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full space-y-8">
+
+    <!-- SEARCH & UID LOOKUP BANNER -->
+    <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <div class="absolute -right-12 -bottom-12 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="max-w-2xl mx-auto text-center space-y-4">
+        <h2 class="text-2xl font-bold text-white tracking-tight">
+          Inspect Your Account & Character Builds
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-300">
+          Enter your Genshin Impact UID to view your showcased characters, weapons, artifact substats, and server-calculated combat stats powered by Enka Network.
+        </p>
+
+        <!-- Search Input Form -->
+        <div class="flex flex-col sm:flex-row items-center gap-2.5 pt-2 max-w-md mx-auto">
+          <div class="relative w-full">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+            <input type="text" id="input-uid" placeholder="Enter UID (e.g. 641874325)" value=""
+              class="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition" />
+          </div>
+          <button id="btn-fetch" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition active:scale-95 shrink-0">
+            <i data-lucide="cloud-download" class="w-4 h-4"></i>
+            <span>Fetch Data</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATUS BANNER (Alerts & Hidden Showcase Feedback) -->
+    <div id="status-banner" class="hidden rounded-xl p-4 text-xs flex items-start gap-3 transition shadow-lg">
+      <div id="status-icon" class="mt-0.5 shrink-0"></div>
+      <div class="flex-1 space-y-1">
+        <h4 id="status-title" class="font-bold text-sm"></h4>
+        <p id="status-message" class="text-xs leading-relaxed"></p>
+      </div>
+      <button id="btn-close-status" class="text-slate-400 hover:text-white shrink-0"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+
+    <!-- PLAYER PROFILE CARD (Rendered after fetch) -->
+    <section id="player-profile-section" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <!-- Player Info -->
+        <div class="flex items-center gap-4">
+          <div class="relative">
+            <img id="player-avatar" src="" alt="Profile Picture" class="w-16 h-16 rounded-full bg-slate-800 border-2 border-amber-400 object-cover shadow-md" />
+            <span id="player-ar-badge" class="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 font-black text-[10px]">
+              AR 58
+            </span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 id="player-nickname" class="text-xl font-bold text-white">Player</h3>
+              <span id="player-wl" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-xs font-mono border border-slate-700">
+                WL 9
+              </span>
+            </div>
+            <div id="player-signature" class="text-xs text-slate-400 italic mt-0.5">
+              "Signature"
+            </div>
+            <div class="text-[11px] text-slate-400 mt-1 font-mono">
+              UID: <span id="player-uid-display" class="text-amber-400 font-bold"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Player Badges -->
+        <div class="flex flex-wrap items-center gap-3 text-xs">
+          <div class="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 flex items-center gap-2">
+            <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
+            <div>
+              <div class="text-[10px] text-slate-400 uppercase tracking-wider">Achievements</div>
+              <div id="player-achievements" class="font-bold text-white font-mono">0</div>
+            </div>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 flex items-center gap-2">
+            <i data-lucide="sword" class="w-4 h-4 text-rose-400"></i>
+            <div>
+              <div class="text-[10px] text-slate-400 uppercase tracking-wider">Spiral Abyss</div>
+              <div id="player-abyss" class="font-bold text-white font-mono">Floor 12</div>
+            </div>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 flex items-center gap-2">
+            <i data-lucide="users" class="w-4 h-4 text-cyan-400"></i>
+            <div>
+              <div class="text-[10px] text-slate-400 uppercase tracking-wider">Showcase</div>
+              <div id="player-chars-count" class="font-bold text-white font-mono">0 Chars</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROFILE VIEW TABS (Showcase vs Damage Calc) -->
+    <div id="profile-view-tabs" class="hidden flex items-center gap-2.5 border-b border-slate-800 pb-3">
+      <button id="profile-tab-showcase" class="main-tab-btn active">
+        <i data-lucide="layers" class="w-4 h-4"></i>
+        <span>Showcase</span>
+      </button>
+      <button id="profile-tab-damage-calc" class="main-tab-btn">
+        <i data-lucide="calculator" class="w-4 h-4"></i>
+        <span>Damage Calc</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: SHOWCASE CONTENT -->
+    <div id="profile-content-showcase" class="space-y-8">
+      <!-- CHARACTER SHOWCASE TABS -->
+      <section id="character-tabs-section" class="hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+          <i data-lucide="layers" class="w-4 h-4 text-amber-400"></i> Showcased Characters
+        </h3>
+        <span class="text-xs text-slate-400">Click a character to view their build</span>
+      </div>
+
+      <!-- Horizontal character icons list -->
+      <div id="character-tabs-container" class="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-thin">
+        <!-- Rendered dynamically via app.js -->
+      </div>
+    </section>
+
+    <!-- DETAILED ENKA CHARACTER BUILD CARD -->
+    <section id="enka-card-section" class="hidden">
+      <div id="enka-card" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-2xl relative overflow-hidden backdrop-blur-md">
+        <!-- Character Background Element Gradient -->
+        <div id="card-element-glow" class="absolute -right-24 -top-24 w-96 h-96 rounded-full blur-3xl pointer-events-none opacity-20"></div>
+
+        <!-- 3-Column Responsive Enka Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
+
+          <!-- LEFT COLUMN: Portrait, Constellations, Talents (Col 1-4) -->
+          <div class="lg:col-span-4 flex flex-col justify-between space-y-4">
+            
+            <!-- Character Header -->
+            <div>
+              <div class="flex items-center gap-2">
+                <span id="char-element-pill" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                  Cryo
+                </span>
+                <span id="char-level-badge" class="text-xs font-mono font-bold text-slate-300">
+                  Lv. 90/90
+                </span>
+                <span id="char-friendship" class="text-xs text-rose-400 font-semibold flex items-center gap-1">
+                  ❤️ 10
+                </span>
+              </div>
+              <h2 id="char-name" class="text-2xl sm:text-3xl font-extrabold text-white mt-1">
+                Kamisato Ayaka
+              </h2>
+            </div>
+
+            <!-- Portrait / Avatar Image -->
+            <div class="relative w-full h-64 sm:h-80 rounded-xl overflow-hidden bg-slate-950/60 border border-slate-800 flex items-center justify-center group">
+              <img id="char-splash" src="" alt="Character Art" class="w-full h-full object-contain p-2 transition duration-300 group-hover:scale-105" />
+              <!-- Constellations Indicator (Left edge) -->
+              <div id="char-constellations" class="absolute left-2.5 top-2.5 flex flex-col gap-1.5">
+                <!-- 6 constellation dots injected -->
+              </div>
+            </div>
+
+            <!-- Talents Sequence -->
+            <div class="space-y-1.5 bg-slate-950/70 border border-slate-800 rounded-xl p-3">
+              <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Talent Levels</div>
+              <div id="char-talents-container" class="space-y-1.5">
+                <!-- Injected via app.js -->
+              </div>
+            </div>
+
+          </div>
+
+          <!-- MIDDLE COLUMN: Combat Stats & Weapon (Col 5-8) -->
+          <div class="lg:col-span-4 flex flex-col justify-between space-y-4">
+            
+            <!-- Combat Stats Table -->
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4 space-y-2.5">
+              <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2 flex items-center justify-between">
+                <span>Combat Attributes</span>
+                <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-slate-400"></i>
+              </div>
+
+              <!-- Stats Rows -->
+              <div class="space-y-2 text-xs" id="combat-stats-rows">
+                <!-- HP -->
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-300 font-medium">Max HP</span>
+                  <div class="text-right font-mono">
+                    <span id="stat-hp-total" class="font-bold text-white text-sm">20,111</span>
+                    <span id="stat-hp-sub" class="text-[10px] text-slate-400 block">12,858 <span class="text-emerald-400">+7,253</span></span>
+                  </div>
+                </div>
+                <!-- ATK -->
+                <div class="flex items-center justify-between border-t border-slate-800/60 pt-1.5">
+                  <span class="text-slate-300 font-medium">ATK</span>
+                  <div class="text-right font-mono">
+                    <span id="stat-atk-total" class="font-bold text-white text-sm">1,951</span>
+                    <span id="stat-atk-sub" class="text-[10px] text-slate-400 block">796 <span class="text-emerald-400">+1,154</span></span>
+                  </div>
+                </div>
+                <!-- DEF -->
+                <div class="flex items-center justify-between border-t border-slate-800/60 pt-1.5">
+                  <span class="text-slate-300 font-medium">DEF</span>
+                  <div class="text-right font-mono">
+                    <span id="stat-def-total" class="font-bold text-white text-sm">1,132</span>
+                    <span id="stat-def-sub" class="text-[10px] text-slate-400 block">784 <span class="text-emerald-400">+349</span></span>
+                  </div>
+                </div>
+                <!-- EM -->
+                <div class="flex items-center justify-between border-t border-slate-800/60 pt-1.5">
+                  <span class="text-slate-300 font-medium">Elemental Mastery</span>
+                  <span id="stat-em" class="font-mono font-bold text-white text-sm">19</span>
+                </div>
+                <!-- CRIT Rate -->
+                <div class="flex items-center justify-between border-t border-slate-800/60 pt-1.5">
+                  <span class="text-slate-300 font-medium">CRIT Rate</span>
+                  <span id="stat-crit-rate" class="font-mono font-bold text-amber-300 text-sm">59.8%</span>
+                </div>
+                <!-- CRIT DMG -->
+                <div class="flex items-center justify-between border-t border-slate-800/60 pt-1.5">
+                  <span class="text-slate-300 font-medium">CRIT DMG</span>
+                  <span id="stat-crit-dmg" class="font-mono font-bold text-amber-300 text-sm">201.1%</span>
+                </div>
+                <!-- ER -->
+                <div class="flex items-center justify-between border-t border-slate-800/60 pt-1.5">
+                  <span class="text-slate-300 font-medium">Energy Recharge</span>
+                  <span id="stat-er" class="font-mono font-bold text-cyan-300 text-sm">116.2%</span>
+                </div>
+                <!-- Elemental DMG Bonus -->
+                <div class="flex items-center justify-between border-t border-slate-800/60 pt-1.5">
+                  <span id="stat-dmg-label" class="text-slate-300 font-medium">Cryo DMG Bonus</span>
+                  <span id="stat-dmg-val" class="font-mono font-bold text-sky-400 text-sm">61.6%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Equipped Weapon Card -->
+            <div id="weapon-card" class="bg-slate-950/70 border border-slate-800 rounded-xl p-3.5 space-y-2">
+              <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Equipped Weapon</div>
+              <div class="flex items-center gap-3">
+                <img id="weapon-icon" src="" alt="Weapon" class="w-12 h-12 rounded-lg bg-slate-900 border border-slate-700 object-cover shrink-0" />
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center justify-between">
+                    <h4 id="weapon-name" class="font-bold text-white text-sm truncate">Amenoma Kageuchi</h4>
+                    <span id="weapon-refine" class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold font-mono">R2</span>
+                  </div>
+                  <div class="flex items-center gap-3 text-xs text-slate-300 mt-1 font-mono">
+                    <span>Lv. <strong id="weapon-level">90</strong></span>
+                    <span>Base ATK: <strong id="weapon-base-atk">454</strong></span>
+                    <span id="weapon-substat" class="text-amber-400 font-semibold">ATK 55.1%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Set Bonuses -->
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 space-y-1">
+              <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Artifact Set Bonuses</div>
+              <div id="set-bonuses-container" class="flex flex-wrap gap-1.5 pt-1">
+                <!-- Injected via app.js -->
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RIGHT COLUMN: 5 Artifact Slots (Col 9-12) -->
+          <div class="lg:col-span-4 space-y-2.5 flex flex-col justify-between">
+            <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center justify-between">
+              <span>Equipped Artifacts (5)</span>
+              <span id="artifact-avg-score" class="text-amber-400 font-mono text-[10px]">Rank 5 ★</span>
+            </div>
+
+            <!-- 5 Artifact Slots Container -->
+            <div id="artifacts-list" class="space-y-2">
+              <!-- 5 artifacts injected dynamically via app.js -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+    </div><!-- END TAB 1: SHOWCASE CONTENT -->
+
+    <!-- TAB 2: DAMAGE CALC CONTENT (Completely empty for now) -->
+    <div id="profile-content-damage-calc" class="hidden"></div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-800/80 bg-slate-950/80 py-6 mt-12 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>Genshin Impact Enka Profile Viewer • Powered by Enka.Network API</div>
+      <div class="text-[11px] text-slate-600">Assets © miHoYo / HoYoverse • Non-commercial theorycraft tool</div>
+    </div>
+  </footer>
+
+  <!-- Frontend Logic -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
